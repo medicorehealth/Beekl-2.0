@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/Input";
  * After sign-in we route by intent (callbackUrl) and let server guards enforce
  * role-based access.
  */
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter();
     const params = useSearchParams();
     const callbackUrl = params.get("callbackUrl") || "/account";
@@ -85,5 +85,14 @@ export default function LoginPage() {
                 </Link>
             </p>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    // useSearchParams must be inside a Suspense boundary for the production build.
+    return (
+        <React.Suspense fallback={<div className="h-64" />}>
+            <LoginForm />
+        </React.Suspense>
     );
 }

@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { SITE } from "@/lib/constants";
 
+// Auth pages read the URL (useSearchParams) — render them dynamically so the
+// production build never tries to statically prerender them.
+export const dynamic = "force-dynamic";
+
 /** Minimal split-screen auth layout — unified for all roles. */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
+
     return (
         <div className="grid min-h-screen lg:grid-cols-2">
             {/* Left: brand panel */}

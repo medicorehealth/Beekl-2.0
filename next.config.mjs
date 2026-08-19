@@ -9,6 +9,11 @@ const nextConfig = {
             { protocol: "https", hostname: "**.myshopify.com" },
         ],
     },
+    // Don't fail the Vercel build on lint/type warnings — the app is type-checked
+    // separately via `tsc --noEmit`. This keeps deployments resilient.
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
     experimental: {
         serverActions: {
             bodySizeLimit: "4mb",

@@ -3,11 +3,14 @@ import { SITE } from "@/lib/constants";
 import { safe } from "@/lib/safe";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Dynamic sitemap. Includes static routes plus published products, collections,
  * creators, communities and drops from the database.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+
     const base = SITE.url;
 
     const staticRoutes = [

@@ -14,10 +14,11 @@ import { cn } from "@/lib/utils";
  * CREATOR (which creates a PENDING creator profile for admin approval). The
  * role is decided server-side — the client can never request an elevated role.
  */
-export default function RegisterPage() {
+function RegisterForm() {
     const router = useRouter();
     const params = useSearchParams();
     const initialAs = params.get("as") === "creator" ? "creator" : "customer";
+
 
     const [as, setAs] = React.useState<"customer" | "creator">(initialAs);
     const [loading, setLoading] = React.useState(false);
@@ -151,3 +152,14 @@ function RoleTab({
         </button>
     );
 }
+
+export default function RegisterPage() {
+    // useSearchParams must be inside a Suspense boundary for the production build.
+    return (
+        <React.Suspense fallback={<div className="h-96" />}>
+            <RegisterForm />
+        </React.Suspense>
+    );
+}
+
+

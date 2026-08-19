@@ -1,6 +1,9 @@
 import { requireAdmin } from "@/lib/session";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
+export const dynamic = "force-dynamic";
+
+
 /**
  * Admin panel layout. Server-guarded via requireAdmin — any non-admin role is
  * redirected to /unauthorized. There is NO separate admin login: admins reach
