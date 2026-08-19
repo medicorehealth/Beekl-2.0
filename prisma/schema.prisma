@@ -1,0 +1,706 @@
+// =============================================================================
+// BeeKL — Prisma Schema
+// "The Community Makes The Clothes."
+//
+// Design principle: Shopify is the source of truth for commerce (products,
+// variants, cart, checkout, payments, orders, fulfillment). This database
+// stores BeeKL-native concepts (creators, communities, drops, submissions,
+// contests, banners, commissions, payouts, wishlists) and lightweight
+// *references* to Shopify entities (by Shopify GID) rather than duplicating
+// their data.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum Role {
+  CUSTOMER
+  CREATOR
+  ADMIN
+  SUPER_ADMIN
+  CONTENT_MANAGER
+  MODERATOR
+  FINANCE
+  SUPPORT
+}
+
+enum CreatorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+  FEATURED
+}
+
+enum CommunityStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  SUSPENDED
+  FEATURED
+}
+
+enum SubmissionStatus {
+  NEW
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CONVERTED_TO_PRODUCT
+}
+
+enum DropStatus {
+  UPCOMING
+  LIVE
+  ENDED
+}
+
+enum ContestStatus {
+  DRAFT
+  OPEN
+  VOTING
+  JUDGING
+  ENDED
+}
+
+enum ContestSubmissionStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+  WINNER
+}
+
+enum CommissionStatus {
+  PENDING
+  APPROVED
+  PAYABLE
+  PAID
+  CANCELLED
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PAID
+  FAILED
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ProductSourceType {
+  SHOPIFY
+  POD
+  MANUAL
+}
+
+enum OrderFulfillmentStatus {
+  UNFULFILLED
+  IN_PRODUCTION
+  FULFILLED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PodOrderStatus {
+  NOT_SUBMITTED
+  QUEUED
+  SUBMITTED
+  IN_PRODUCTION
+  SHIPPED
+  FAILED
+  CANCELLED
+}
+
+enum CollectionKind {
+  MEMES
+  ANIME
+  MOVIES_TV
+  CREATOR_MERCH
+  OVERSIZED
+  HOODIES
+  LIMITED_DROPS
+  BEEKL_ORIGINALS
+  GENERIC
+}
+
+// -----------------------------------------------------------------------------
+// AUTH / USERS / RBAC
+// -----------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  name          String?
+  phone         String?
+  image         String?
+  role          Role      @default(CUSTOMER)
+  isActive      Boolean   @default(true)
+
+  // Optional link to Shopify customer (source of truth for orders)
+  shopifyCustomerId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  accounts       Account[]
+  sessions       Session[]
+  creator        Creator?
+  addresses      Address[]
+  wishlistItems  WishlistItem[]
+  submissions    DesignSubmission[]
+  contestEntries ContestSubmission[]
+  contestVotes   ContestVote[]
+  communityMemberships CommunityMember[]
+  orderRefs      OrderReference[]
+  permissions    UserPermission[]
+  auditLogs      AuditLog[]
+
+  @@index([role])
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique // e.g. "products.manage", "payouts.approve"
+  description String?
+  users       UserPermission[]
+}
+
+// Explicit per-user permission grants (in addition to role-based defaults).
+model UserPermission {
+  userId       String
+  permissionId String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, permissionId])
+}
+
+// NextAuth-compatible tables
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Address {
+  id        String  @id @default(cuid())
+  userId    String
+  fullName  String
+  line1     String
+  line2     String?
+  city      String
+  state     String
+  postal    String
+  country   String  @default("India")
+  phone     String?
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// CREATORS & COMMUNITIES
+// -----------------------------------------------------------------------------
+
+model Creator {
+  id           String        @id @default(cuid())
+  userId       String        @unique
+  handle       String        @unique // @handle
+  displayName  String
+  bio          String?       @db.Text
+  avatarImage  String?
+  bannerImage  String?
+  status       CreatorStatus @default(PENDING)
+  isFeatured   Boolean       @default(false)
+
+  // Social links stored as JSON: { instagram, youtube, x, tiktok, website }
+  socialLinks  Json?
+
+  // Commission rate in basis points (e.g. 1500 = 15%). Server-side truth.
+  commissionRateBps Int @default(1500)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communities Community[]
+  products    ProductReference[]
+  drops       Drop[]
+  commissions Commission[]
+  payouts     Payout[]
+
+  @@index([status])
+}
+
+model Community {
+  id           String          @id @default(cuid())
+  creatorId    String
+  slug         String          @unique
+  name         String
+  description  String?         @db.Text
+  bannerImage  String?
+  avatarImage  String?
+  status       CommunityStatus @default(DRAFT)
+  isFeatured   Boolean         @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator     Creator            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  members     CommunityMember[]
+  products    ProductReference[]
+  drops       Drop[]
+  submissions DesignSubmission[]
+
+  @@index([status])
+  @@index([creatorId])
+}
+
+model CommunityMember {
+  id          String   @id @default(cuid())
+  communityId String
+  userId      String
+  joinedAt    DateTime @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// COMMERCE REFERENCES (Shopify = source of truth)
+// -----------------------------------------------------------------------------
+
+// A lightweight reference to a Shopify product, enriched with BeeKL metadata
+// (creator, community, collection, drop, story). We DO NOT duplicate variant
+// or pricing data — that is fetched live from Shopify Storefront API.
+model ProductReference {
+  id              String            @id @default(cuid())
+  shopifyProductId String?          @unique // Shopify GID (source of truth)
+  handle          String            @unique // slug used in /products/[slug]
+  title           String
+  status          ProductStatus     @default(DRAFT)
+  source          ProductSourceType @default(SHOPIFY)
+
+  // BeeKL editorial metadata
+  story           String? @db.Text // "PRODUCT STORY"
+  whyThisExists   String? @db.Text // "WHY THIS EXISTS"
+  tags            String[]
+
+  // Relationships
+  creatorId    String?
+  communityId  String?
+  collectionId String?
+  dropId       String?
+
+  // POD linkage (optional)
+  podProductId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator     Creator?          @relation(fields: [creatorId], references: [id])
+  community   Community?        @relation(fields: [communityId], references: [id])
+  collection  CollectionRef?    @relation(fields: [collectionId], references: [id])
+  drop        Drop?             @relation(fields: [dropId], references: [id])
+  wishlisted  WishlistItem[]
+  commissions Commission[]
+
+  @@index([status])
+  @@index([creatorId])
+  @@index([communityId])
+  @@index([collectionId])
+  @@index([dropId])
+}
+
+model CollectionRef {
+  id                 String         @id @default(cuid())
+  shopifyCollectionId String?       @unique
+  slug               String         @unique
+  title              String
+  description        String?        @db.Text
+  kind               CollectionKind @default(GENERIC)
+  heroImage          String?
+  isFeatured         Boolean        @default(false)
+  displayOrder       Int            @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products ProductReference[]
+
+  @@index([kind])
+}
+
+model Drop {
+  id           String     @id @default(cuid())
+  slug         String     @unique
+  name         String
+  story        String?    @db.Text
+  bannerImage  String?
+  status       DropStatus @default(UPCOMING)
+  isFeatured   Boolean    @default(false)
+
+  releaseAt DateTime?
+  endAt     DateTime?
+
+  creatorId   String?
+  communityId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator   Creator?           @relation(fields: [creatorId], references: [id])
+  community Community?         @relation(fields: [communityId], references: [id])
+  products  ProductReference[]
+
+  @@index([status])
+}
+
+// -----------------------------------------------------------------------------
+// USER-GENERATED IDEAS: SUBMISSIONS + CONTESTS
+// -----------------------------------------------------------------------------
+
+model DesignSubmission {
+  id          String           @id @default(cuid())
+  userId      String
+  communityId String?
+  title       String
+  description String?          @db.Text
+  category    String?
+  images      String[]
+  references  String[] // reference links / inspiration (must be original/licensed)
+  status      SubmissionStatus @default(NEW)
+  adminNote   String?          @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community? @relation(fields: [communityId], references: [id])
+
+  @@index([status])
+  @@index([userId])
+}
+
+model Contest {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  title        String
+  tagline      String?
+  description  String?       @db.Text
+  rules        String?       @db.Text
+  prize        String?
+  bannerImage  String?
+  status       ContestStatus @default(DRAFT)
+  submissionLimitPerUser Int  @default(3)
+
+  startAt DateTime?
+  endAt   DateTime?
+  votingEndAt DateTime?
+
+  winnerSubmissionId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submissions ContestSubmission[]
+
+  @@index([status])
+}
+
+model ContestSubmission {
+  id        String                  @id @default(cuid())
+  contestId String
+  userId    String
+  title     String
+  description String?               @db.Text
+  images    String[]
+  status    ContestSubmissionStatus @default(SUBMITTED)
+  voteCount Int                     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contest Contest        @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes   ContestVote[]
+
+  @@index([contestId])
+  @@index([userId])
+}
+
+model ContestVote {
+  id                  String   @id @default(cuid())
+  contestSubmissionId String
+  userId              String
+  createdAt           DateTime @default(now())
+
+  contestSubmission ContestSubmission @relation(fields: [contestSubmissionId], references: [id], onDelete: Cascade)
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestSubmissionId, userId])
+}
+
+// -----------------------------------------------------------------------------
+// CONTENT / CMS
+// -----------------------------------------------------------------------------
+
+model Banner {
+  id                 String   @id @default(cuid())
+  title              String
+  subtitle           String?
+  desktopImage       String
+  mobileImage        String?
+  primaryButtonText  String?
+  primaryButtonLink  String?
+  secondaryButtonText String?
+  secondaryButtonLink String?
+  displayOrder       Int      @default(0)
+  isActive           Boolean  @default(true)
+  startDate          DateTime?
+  endDate            DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, displayOrder])
+}
+
+// Key/value store for editable homepage sections (which collections/creators/
+// communities/drops are featured, section toggles, etc.). Avoids code changes
+// for ordinary content updates.
+model HomepageSection {
+  id           String   @id @default(cuid())
+  key          String   @unique // e.g. "trending", "featured_collections"
+  title        String
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  config       Json? // section-specific configuration
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// WISHLIST
+// -----------------------------------------------------------------------------
+
+model WishlistItem {
+  id                 String   @id @default(cuid())
+  userId             String
+  productReferenceId String
+  createdAt          DateTime @default(now())
+
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product ProductReference @relation(fields: [productReferenceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productReferenceId])
+  @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// ORDERS (references to Shopify) + POD + COMMISSIONS + PAYOUTS
+// -----------------------------------------------------------------------------
+
+// A lightweight reference to a Shopify order. Used to drive BeeKL-native
+// workflows (commission ledger, POD fulfillment). We do not duplicate all
+// order data; we fetch details live from Shopify Admin API server-side.
+model OrderReference {
+  id              String                 @id @default(cuid())
+  shopifyOrderId  String                 @unique // Shopify GID
+  orderNumber     String?
+  userId          String?
+  email           String?
+  currency        String                 @default("INR")
+  totalAmount     Decimal                @default(0) @db.Decimal(12, 2)
+  fulfillmentStatus OrderFulfillmentStatus @default(UNFULFILLED)
+  processedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User?        @relation(fields: [userId], references: [id])
+  commissions Commission[]
+  podOrder    PodOrder?
+
+  @@index([userId])
+  @@index([fulfillmentStatus])
+}
+
+// Commission ledger — one entry per eligible creator sale line.
+// Calculated SERVER-SIDE only.
+model Commission {
+  id                 String           @id @default(cuid())
+  orderReferenceId   String
+  productReferenceId String?
+  creatorId          String
+
+  // Money is stored in minor units-safe Decimal.
+  grossAmount   Decimal @default(0) @db.Decimal(12, 2) // gross sale attributable
+  deductions    Decimal @default(0) @db.Decimal(12, 2) // POD cost, fees, etc.
+  commissionRateBps Int  @default(1500)
+  commissionAmount Decimal @default(0) @db.Decimal(12, 2) // creator's share
+  beeklShare    Decimal @default(0) @db.Decimal(12, 2) // BeeKL's share
+  currency      String  @default("INR")
+
+  status CommissionStatus @default(PENDING)
+  note   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderReference OrderReference    @relation(fields: [orderReferenceId], references: [id], onDelete: Cascade)
+  product        ProductReference? @relation(fields: [productReferenceId], references: [id])
+  creator        Creator           @relation(fields: [creatorId], references: [id])
+  payoutId       String?
+  payout         Payout?           @relation(fields: [payoutId], references: [id])
+
+  @@index([creatorId, status])
+  @@index([orderReferenceId])
+}
+
+model Payout {
+  id          String       @id @default(cuid())
+  creatorId   String
+  amount      Decimal      @default(0) @db.Decimal(12, 2)
+  currency    String       @default("INR")
+  status      PayoutStatus @default(PENDING)
+  reference   String? // external payout reference (never store raw bank creds)
+  note        String?
+  paidAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator     Creator      @relation(fields: [creatorId], references: [id])
+  commissions Commission[]
+
+  @@index([creatorId, status])
+}
+
+// POD order — mirrors the state of a print-on-demand fulfillment request.
+// If no provider is configured the status remains NOT_SUBMITTED and the UI
+// shows "POD provider not connected."
+model PodOrder {
+  id               String         @id @default(cuid())
+  orderReferenceId String         @unique
+  provider         String? // e.g. "printful", "qikink" — null when not connected
+  providerOrderId  String?
+  status           PodOrderStatus @default(NOT_SUBMITTED)
+  trackingNumber   String?
+  trackingUrl      String?
+  lastError        String?        @db.Text
+  payload          Json? // last request/response snapshot for debugging
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderReference OrderReference @relation(fields: [orderReferenceId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+// -----------------------------------------------------------------------------
+// ANALYTICS (aggregated, real events only — never fabricated)
+// -----------------------------------------------------------------------------
+
+// Daily rolled-up metrics. Populated by real events/jobs. If empty, the UI
+// shows "Data unavailable" rather than fake numbers.
+model AnalyticsDaily {
+  id            String   @id @default(cuid())
+  date          DateTime @db.Date
+  scope         String   @default("platform") // "platform" | "creator:<id>" | "community:<id>"
+  revenue       Decimal  @default(0) @db.Decimal(14, 2)
+  orders        Int      @default(0)
+  newCustomers  Int      @default(0)
+  units         Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([date, scope])
+  @@index([scope])
+}
+
+// Generic append-only event log for building analytics without fabricating.
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  type      String // "page_view" | "product_view" | "add_to_cart" | ...
+  userId    String?
+  path      String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+// Security / admin action trail.
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  target    String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([createdAt])
+}
