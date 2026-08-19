@@ -110,5 +110,13 @@ export const authOptions: NextAuthOptions = {
             return session;
         },
     },
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    // Use a configured secret when available. If none is set (e.g. a preview
+    // deploy with zero env vars), fall back to a build-safe placeholder so the
+    // app still renders instead of crashing. Set AUTH_SECRET before going live.
+    secret:
+        process.env.AUTH_SECRET ||
+        process.env.NEXTAUTH_SECRET ||
+        "beekl-insecure-placeholder-secret-change-me-before-production",
 };
+
+
