@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 
+// Rendered dynamically (avoids the static export step that failed on Vercel).
+export const dynamic = "force-dynamic";
+
 export default function NotFound() {
+
     return (
         <>
             <AnnouncementBar />

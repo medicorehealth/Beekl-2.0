@@ -10,6 +10,13 @@ const inter = Inter({
     display: "swap",
 });
 
+// BeeKL is a fully database- and session-driven app. Render everything
+// dynamically at request time so Vercel never statically exports pages at
+// build time (which caused "/_not-found" and "/unauthorized" export errors
+// because they run before env/DB/runtime context exists).
+export const dynamic = "force-dynamic";
+
+
 export const metadata: Metadata = {
     metadataBase: new URL(SITE.url),
     title: {

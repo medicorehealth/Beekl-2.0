@@ -4,6 +4,10 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 
 export const metadata = { title: "Unauthorized", robots: { index: false } };
 
+// Rendered dynamically (avoids static export step that failed on Vercel).
+export const dynamic = "force-dynamic";
+
+
 export default function UnauthorizedPage() {
     return (
         <>
