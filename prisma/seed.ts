@@ -61,17 +61,22 @@ async function main() {
 
     const password = await bcrypt.hash("password123", 12);
 
+    // Dedicated admin credentials (separate, stronger password).
+    const adminPassword = await bcrypt.hash("@beekladmin007#", 12);
+
     // --- Users --------------------------------------------------------------
     const superAdmin = await prisma.user.upsert({
-        where: { email: "admin@beekl.dev" },
+        where: { email: "admin@beekl007.com" },
         create: {
-            email: "admin@beekl.dev",
+            email: "admin@beekl007.com",
             name: "BeeKL Admin",
-            passwordHash: password,
+            passwordHash: adminPassword,
             role: "SUPER_ADMIN",
         },
-        update: { role: "SUPER_ADMIN" },
+        // Re-seeding always restores the SUPER_ADMIN role + latest password.
+        update: { role: "SUPER_ADMIN", passwordHash: adminPassword, isActive: true },
     });
+
 
     await prisma.user.upsert({
         where: { email: "finance@beekl.dev" },
@@ -357,13 +362,16 @@ async function main() {
 
     console.log("✅ Seed complete.");
     console.log("");
-    console.log("   Demo logins (password: password123):");
-    console.log("   • admin@beekl.dev     (SUPER_ADMIN)");
+    console.log("   ADMIN login:");
+    console.log("   • admin@beekl007.com  /  @beekladmin007#   (SUPER_ADMIN)");
+    console.log("");
+    console.log("   Other demo logins (password: password123):");
     console.log("   • finance@beekl.dev   (FINANCE)");
     console.log("   • riya@beekl.dev      (CREATOR, featured)");
     console.log("   • customer@beekl.dev  (CUSTOMER)");
     console.log("");
     console.log("   ⚠️  This is DEVELOPMENT DATA — not real production analytics.");
+
 }
 
 main()

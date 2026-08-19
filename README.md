@@ -88,12 +88,13 @@ Open http://localhost:3000
 
 ### Demo logins (from the seed — password `password123`)
 
-| Email                | Role         | Access                    |
-| -------------------- | ------------ | ------------------------- |
-| `admin@beekl.dev`    | SUPER_ADMIN  | Full admin + store        |
-| `finance@beekl.dev`  | FINANCE      | Finance admin areas       |
-| `riya@beekl.dev`     | CREATOR      | Creator dashboard + store |
-| `customer@beekl.dev` | CUSTOMER     | Store + account           |
+| Email                | Password          | Role         | Access                    |
+| -------------------- | ----------------- | ------------ | ------------------------- |
+| `admin@beekl007.com` | `@beekladmin007#` | SUPER_ADMIN  | Full admin + store        |
+| `finance@beekl.dev`  | `password123`     | FINANCE      | Finance admin areas       |
+| `riya@beekl.dev`     | `password123`     | CREATOR      | Creator dashboard + store |
+| `customer@beekl.dev` | `password123`     | CUSTOMER     | Store + account           |
+
 
 > ⚠️ Seed data is **development data** — not real production analytics or sales.
 
