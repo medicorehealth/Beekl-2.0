@@ -116,7 +116,29 @@ enum OrderFulfillmentStatus {
   RETURNED
 }
 
+enum PaymentMethod {
+  COD
+  RAZORPAY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
 enum PodOrderStatus {
+
   NOT_SUBMITTED
   QUEUED
   SUBMITTED
@@ -170,11 +192,13 @@ model User {
   contestVotes   ContestVote[]
   communityMemberships CommunityMember[]
   orderRefs      OrderReference[]
+  orders         Order[]
   permissions    UserPermission[]
   auditLogs      AuditLog[]
 
   @@index([role])
 }
+
 
 model Permission {
   id          String           @id @default(cuid())
@@ -330,16 +354,27 @@ model CommunityMember {
 // or pricing data — that is fetched live from Shopify Storefront API.
 model ProductReference {
   id              String            @id @default(cuid())
-  shopifyProductId String?          @unique // Shopify GID (source of truth)
+  shopifyProductId String?          @unique // Shopify GID (optional; native store doesn't need it)
   handle          String            @unique // slug used in /products/[slug]
   title           String
   status          ProductStatus     @default(DRAFT)
-  source          ProductSourceType @default(SHOPIFY)
+  source          ProductSourceType @default(MANUAL)
+
+  // Native commerce data (BeeKL runs standalone — no external store required).
+  // Prices are stored in whole INR rupees for simplicity.
+  priceInr       Int?     // selling price in ₹
+  compareAtInr   Int?     // original/struck-through price in ₹
+  currency       String   @default("INR")
+  images         String[] // product image URLs (first = featured)
+  sizes          String[] // available sizes, e.g. ["S","M","L"]
+  stock          Int      @default(0) // 0 = out of stock / made-to-order handled separately
+  description    String?  @db.Text
 
   // BeeKL editorial metadata
   story           String? @db.Text // "PRODUCT STORY"
   whyThisExists   String? @db.Text // "WHY THIS EXISTS"
   tags            String[]
+
 
   // Relationships
   creatorId    String?
@@ -656,8 +691,74 @@ model PodOrder {
 }
 
 // -----------------------------------------------------------------------------
+// NATIVE ORDERS (standalone store — no Shopify required)
+// -----------------------------------------------------------------------------
+
+// A first-class BeeKL order created at checkout. Amounts in whole INR rupees.
+model Order {
+  id            String        @id @default(cuid())
+  orderNumber   String        @unique // human-friendly, e.g. BK-000123
+  userId        String?
+  email         String
+  phone         String?
+
+  // Shipping address (denormalized snapshot at time of order)
+  shipName      String
+  shipLine1     String
+  shipLine2     String?
+  shipCity      String
+  shipState     String
+  shipPostal    String
+  shipCountry   String        @default("India")
+
+  subtotalInr   Int           @default(0)
+  shippingInr   Int           @default(0)
+  totalInr      Int           @default(0)
+  currency      String        @default("INR")
+
+  paymentMethod PaymentMethod @default(COD)
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentRef    String? // external gateway reference (never raw card data)
+  status        OrderStatus   @default(PENDING)
+
+  trackingNumber String?
+  trackingUrl    String?
+  note           String?      @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User?       @relation(fields: [userId], references: [id])
+  items OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// A line item snapshot (title/price captured at purchase time).
+model OrderItem {
+  id                 String  @id @default(cuid())
+  orderId            String
+  productReferenceId String?
+  title              String
+  handle             String?
+  image              String?
+  size               String?
+  unitPriceInr       Int     @default(0)
+  quantity           Int     @default(1)
+  creatorId          String? // for commission attribution
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([creatorId])
+}
+
+// -----------------------------------------------------------------------------
 // ANALYTICS (aggregated, real events only — never fabricated)
 // -----------------------------------------------------------------------------
+
 
 // Daily rolled-up metrics. Populated by real events/jobs. If empty, the UI
 // shows "Data unavailable" rather than fake numbers.
