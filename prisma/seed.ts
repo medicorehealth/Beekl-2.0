@@ -360,7 +360,43 @@ async function main() {
         });
     }
 
+    // --- Site settings (singleton) -----------------------------------------
+    await prisma.siteSettings.upsert({
+        where: { id: "singleton" },
+        create: {
+            id: "singleton",
+            brandName: "BeeKL",
+            tagline: "The Community Makes The Clothes.",
+            description:
+                "Gen-Z fashion, creator merchandise, community-made drops and internet culture-inspired clothing.",
+            accentHoney: "#FFC400",
+            accentFlame: "#FF4D2E",
+            announcementActive: true,
+            announcementText: "FREE SHIPPING ON ORDERS ABOVE ₹999",
+            announcementItems: [
+                "THE COMMUNITY MAKES THE CLOTHES.",
+                "NEW DROPS EVERY WEEK.",
+                "CREATOR MERCH · MEMES · POP CULTURE",
+            ],
+            heroAutoplayMs: 6000,
+            footerDescription:
+                "Gen-Z fashion, creator merchandise, community-made drops and internet culture-inspired clothing.",
+            footerTagline: "The Community Makes The Clothes.",
+            footerNote:
+                "BeeKL supports original and properly licensed designs only. Movie, anime and pop-culture merchandise is offered strictly where legally licensed.",
+            copyrightText: "BeeKL. All rights reserved.",
+            newsletterEnabled: true,
+            socialLinks: [
+                { label: "Instagram", href: "https://instagram.com" },
+                { label: "YouTube", href: "https://youtube.com" },
+                { label: "X", href: "https://x.com" },
+            ],
+        },
+        update: {},
+    });
+
     console.log("✅ Seed complete.");
+
     console.log("");
     console.log("   ADMIN login:");
     console.log("   • admin@beekl007.com  /  @beekladmin007#   (SUPER_ADMIN)");

@@ -50,14 +50,17 @@ const config: Config = {
                     900: "#161615",
                 },
                 // Selective bold accent — BeeKL "honey" + electric support.
+                // DEFAULT reads a CSS variable so the admin can retheme accents
+                // at runtime (falls back to the brand hex when unset).
                 honey: {
-                    DEFAULT: "#FFC400",
+                    DEFAULT: "var(--bk-honey, #FFC400)",
                     dark: "#E0A800",
                 },
                 flame: {
-                    DEFAULT: "#FF4D2E",
+                    DEFAULT: "var(--bk-flame, #FF4D2E)",
                     dark: "#E23A1E",
                 },
+
                 // Semantic
                 success: "#1F9D55",
                 warning: "#E0A800",
@@ -121,6 +124,14 @@ const config: Config = {
                 shimmer: {
                     "100%": { transform: "translateX(100%)" },
                 },
+                "ken-burns": {
+                    "0%": { transform: "scale(1) translate3d(0,0,0)" },
+                    "100%": { transform: "scale(1.12) translate3d(-1.5%, -1.5%, 0)" },
+                },
+                "hero-progress": {
+                    from: { transform: "scaleX(0)" },
+                    to: { transform: "scaleX(1)" },
+                },
             },
             animation: {
                 "fade-in": "fade-in 0.4s ease-out",
@@ -130,7 +141,9 @@ const config: Config = {
                 "slide-in-left": "slide-in-left 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
                 marquee: "marquee 30s linear infinite",
                 shimmer: "shimmer 1.5s infinite",
+                "ken-burns": "ken-burns 7s ease-out forwards",
             },
+
         },
     },
     plugins: [],

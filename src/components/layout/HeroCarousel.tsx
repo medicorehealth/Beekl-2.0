@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type HeroSlide = {
@@ -18,15 +18,22 @@ export type HeroSlide = {
 };
 
 /**
- * Full-width responsive hero carousel.
- * Features: autoplay, swipe, arrows, dots, pause on hover, responsive images,
- * lazy loading (except first slide which is eager for LCP).
+ * Premium full-width auto-sliding hero carousel.
+ * Features: autoplay (configurable), Ken-Burns zoom, animated progress bar,
+ * swipe, arrows, dots, pause on hover, responsive images, lazy loading.
  */
-export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
+export function HeroCarousel({
+    slides,
+    autoplayMs = 6000,
+}: {
+    slides: HeroSlide[];
+    autoplayMs?: number;
+}) {
     const [index, setIndex] = React.useState(0);
     const [paused, setPaused] = React.useState(false);
     const touchStartX = React.useRef<number | null>(null);
     const count = slides.length;
+    const interval = Math.max(2500, autoplayMs || 6000);
 
     const go = React.useCallback(
         (n: number) => setIndex((prev) => (n + count) % count),
@@ -35,9 +42,9 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
 
     React.useEffect(() => {
         if (paused || count <= 1) return;
-        const t = setInterval(() => setIndex((p) => (p + 1) % count), 6000);
+        const t = setInterval(() => setIndex((p) => (p + 1) % count), interval);
         return () => clearInterval(t);
-    }, [paused, count]);
+    }, [paused, count, interval]);
 
     if (count === 0) return null;
 
@@ -55,66 +62,87 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
             }}
             aria-roledescription="carousel"
         >
-            <div className="relative h-[72vh] max-h-[760px] min-h-[440px] w-full">
-                {slides.map((slide, i) => (
-                    <div
-                        key={slide.id}
-                        className={cn(
-                            "absolute inset-0 transition-opacity duration-700",
-                            i === index ? "opacity-100" : "pointer-events-none opacity-0"
-                        )}
-                        aria-hidden={i !== index}
-                    >
-                        {/* Responsive image */}
-                        <picture>
-                            {slide.mobileImage && (
-                                <source media="(max-width: 767px)" srcSet={slide.mobileImage} />
+            <div className="relative h-[78vh] max-h-[820px] min-h-[480px] w-full">
+                {slides.map((slide, i) => {
+                    const active = i === index;
+                    return (
+                        <div
+                            key={slide.id}
+                            className={cn(
+                                "absolute inset-0 transition-opacity duration-[900ms] ease-out",
+                                active ? "opacity-100" : "pointer-events-none opacity-0"
                             )}
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={slide.desktopImage}
-                                alt={slide.title}
-                                loading={i === 0 ? "eager" : "lazy"}
-                                className="h-full w-full object-cover"
-                            />
-                        </picture>
-                        <div className="absolute inset-0 bg-gradient-to-r from-ink/80 via-ink/40 to-transparent" />
-
-                        {/* Content */}
-                        <div className="absolute inset-0">
-                            <div className="bk-container flex h-full flex-col justify-center">
-                                <div className="max-w-2xl animate-fade-up">
-                                    <h1 className="font-display text-display-lg text-paper text-balance">
-                                        {slide.title}
-                                    </h1>
-                                    {slide.subtitle && (
-                                        <p className="mt-4 max-w-md text-base text-paper/80 md:text-lg">
-                                            {slide.subtitle}
-                                        </p>
+                            aria-hidden={!active}
+                        >
+                            {/* Responsive image with slow Ken-Burns zoom while active */}
+                            <div className="absolute inset-0 overflow-hidden">
+                                <picture>
+                                    {slide.mobileImage && (
+                                        <source media="(max-width: 767px)" srcSet={slide.mobileImage} />
                                     )}
-                                    <div className="mt-8 flex flex-wrap gap-3">
-                                        {slide.primaryButtonText && slide.primaryButtonLink && (
-                                            <Link
-                                                href={slide.primaryButtonLink}
-                                                className="inline-flex h-14 items-center rounded-full bg-paper px-8 text-sm font-bold uppercase tracking-wide text-ink transition-transform hover:scale-105"
-                                            >
-                                                {slide.primaryButtonText}
-                                            </Link>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={slide.desktopImage}
+                                        alt={slide.title}
+                                        loading={i === 0 ? "eager" : "lazy"}
+                                        className={cn(
+                                            "h-full w-full object-cover will-change-transform",
+                                            active && "animate-ken-burns"
                                         )}
-                                        {slide.secondaryButtonText && slide.secondaryButtonLink && (
-                                            <Link
-                                                href={slide.secondaryButtonLink}
-                                                className="inline-flex h-14 items-center rounded-full border-2 border-paper/60 px-8 text-sm font-bold uppercase tracking-wide text-paper transition-colors hover:bg-paper hover:text-ink"
-                                            >
-                                                {slide.secondaryButtonText}
-                                            </Link>
+                                    />
+                                </picture>
+                            </div>
+
+                            {/* Cinematic gradient wash */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/55 to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-ink/20" />
+
+                            {/* Content */}
+                            <div className="absolute inset-0">
+                                <div className="bk-container flex h-full flex-col justify-center">
+                                    <div
+                                        className={cn(
+                                            "max-w-2xl",
+                                            active && "animate-fade-up"
                                         )}
+                                    >
+                                        <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-paper/25 bg-paper/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.25em] text-paper/80 backdrop-blur-sm">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-honey" />
+                                            BeeKL Originals
+                                        </span>
+                                        <h1 className="font-display text-display-lg text-paper text-balance drop-shadow-sm">
+                                            {slide.title}
+                                        </h1>
+                                        {slide.subtitle && (
+                                            <p className="mt-5 max-w-md text-base leading-relaxed text-paper/85 md:text-lg">
+                                                {slide.subtitle}
+                                            </p>
+                                        )}
+                                        <div className="mt-9 flex flex-wrap gap-3">
+                                            {slide.primaryButtonText && slide.primaryButtonLink && (
+                                                <Link
+                                                    href={slide.primaryButtonLink}
+                                                    className="group inline-flex h-14 items-center gap-2 rounded-full bg-paper px-8 text-sm font-bold uppercase tracking-wide text-ink transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lift"
+                                                >
+                                                    {slide.primaryButtonText}
+                                                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                                </Link>
+                                            )}
+                                            {slide.secondaryButtonText && slide.secondaryButtonLink && (
+                                                <Link
+                                                    href={slide.secondaryButtonLink}
+                                                    className="inline-flex h-14 items-center rounded-full border border-paper/50 bg-paper/5 px-8 text-sm font-bold uppercase tracking-wide text-paper backdrop-blur-sm transition-colors hover:bg-paper hover:text-ink"
+                                                >
+                                                    {slide.secondaryButtonText}
+                                                </Link>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Arrows */}
@@ -123,30 +151,47 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                     <button
                         onClick={() => go(index - 1)}
                         aria-label="Previous slide"
-                        className="absolute left-4 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-paper/90 text-ink transition-transform hover:scale-110 md:flex"
+                        className="absolute left-5 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-paper/20 bg-ink/30 text-paper backdrop-blur-md transition-all hover:scale-110 hover:bg-paper hover:text-ink md:flex"
                     >
                         <ChevronLeft className="h-5 w-5" />
                     </button>
                     <button
                         onClick={() => go(index + 1)}
                         aria-label="Next slide"
-                        className="absolute right-4 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-paper/90 text-ink transition-transform hover:scale-110 md:flex"
+                        className="absolute right-5 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-paper/20 bg-ink/30 text-paper backdrop-blur-md transition-all hover:scale-110 hover:bg-paper hover:text-ink md:flex"
                     >
                         <ChevronRight className="h-5 w-5" />
                     </button>
 
-                    {/* Dots */}
-                    <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2">
+                    {/* Progress dots with animated fill */}
+                    <div className="absolute bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-2.5">
                         {slides.map((_, i) => (
                             <button
                                 key={i}
                                 onClick={() => setIndex(i)}
                                 aria-label={`Go to slide ${i + 1}`}
-                                className={cn(
-                                    "h-1.5 rounded-full transition-all",
-                                    i === index ? "w-8 bg-paper" : "w-1.5 bg-paper/50"
-                                )}
-                            />
+                                className="group relative py-2"
+                            >
+                                <span
+                                    className={cn(
+                                        "block h-1 overflow-hidden rounded-full bg-paper/30 transition-all duration-300",
+                                        i === index ? "w-10" : "w-4 group-hover:w-6"
+                                    )}
+                                >
+                                    {i === index && !paused && (
+                                        <span
+                                            key={`${index}-${paused}`}
+                                            className="block h-full origin-left rounded-full bg-paper"
+                                            style={{
+                                                animation: `hero-progress ${interval}ms linear forwards`,
+                                            }}
+                                        />
+                                    )}
+                                    {i === index && paused && (
+                                        <span className="block h-full rounded-full bg-paper" />
+                                    )}
+                                </span>
+                            </button>
                         ))}
                     </div>
                 </>

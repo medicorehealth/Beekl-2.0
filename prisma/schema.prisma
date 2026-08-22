@@ -556,10 +556,55 @@ model Banner {
   @@index([isActive, displayOrder])
 }
 
+// Global, admin-editable site settings (singleton row, id = "singleton").
+// Drives branding, announcement bar, footer, social links and homepage section
+// visibility/order/copy — so everything is customizable without code changes.
+model SiteSettings {
+  id          String  @id @default("singleton")
+
+  // Branding
+  brandName   String  @default("BeeKL")
+  tagline     String  @default("The Community Makes The Clothes.")
+  description String  @default("Gen-Z fashion, creator merchandise, community-made drops and internet culture-inspired clothing.") @db.Text
+  logoUrl     String?
+
+  // Theme accents (hex). Applied as CSS variables at runtime.
+  accentHoney String @default("#FFC400")
+  accentFlame String @default("#FF4D2E")
+
+  // Announcement bar
+  announcementActive Boolean  @default(true)
+  announcementText   String   @default("FREE SHIPPING ON ORDERS ABOVE ₹999")
+  // Extra rotating messages (mobile marquee). JSON array of strings.
+  announcementItems  Json?
+
+  // Hero carousel behavior
+  heroAutoplayMs Int @default(6000)
+
+  // Footer
+  footerDescription String  @default("Gen-Z fashion, creator merchandise, community-made drops and internet culture-inspired clothing.") @db.Text
+  footerTagline     String  @default("The Community Makes The Clothes.")
+  footerNote        String  @default("BeeKL supports original and properly licensed designs only. Movie, anime and pop-culture merchandise is offered strictly where legally licensed.") @db.Text
+  copyrightText     String  @default("BeeKL. All rights reserved.")
+  newsletterEnabled Boolean @default(true)
+  // Footer link columns. JSON: [{ title, links: [{ label, href }] }]
+  footerColumns     Json?
+
+  // Social links. JSON: [{ label, href }]
+  socialLinks Json?
+
+  // Homepage section config. JSON: [{ key, title, subtitle, enabled, order }]
+  homepageSections Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Key/value store for editable homepage sections (which collections/creators/
 // communities/drops are featured, section toggles, etc.). Avoids code changes
 // for ordinary content updates.
 model HomepageSection {
+
   id           String   @id @default(cuid())
   key          String   @unique // e.g. "trending", "featured_collections"
   title        String

@@ -19,8 +19,10 @@ import {
     CreditCard,
     Image as ImageIcon,
     LayoutTemplate,
+    Paintbrush,
     BarChart3,
     Settings,
+
     LogOut,
     Menu,
     X,
@@ -78,10 +80,12 @@ const GROUPS: NavGroup[] = [
     {
         title: "Content",
         items: [
+            { label: "Appearance", href: "/admin/appearance", icon: <Paintbrush className="h-4 w-4" />, perm: "settings.manage" },
             { label: "Banners", href: "/admin/banners", icon: <ImageIcon className="h-4 w-4" />, perm: "banners.manage" },
             { label: "Homepage", href: "/admin/homepage", icon: <LayoutTemplate className="h-4 w-4" />, perm: "homepage.manage" },
         ],
     },
+
     {
         title: "Insights",
         items: [

@@ -11,8 +11,10 @@
     :root {
         --bk-ink: 10 10 10;
         --bk-paper: 250 250 247;
-        --bk-honey: 255 196 0;
-        --bk-flame: 255 77 46;
+        /* Accent colors are admin-themeable and injected at runtime via
+           SiteSettings; these are the on-brand defaults. */
+        --bk-honey: #FFC400;
+        --bk-flame: #FF4D2E;
     }
 
     * {
@@ -34,6 +36,31 @@
     ::selection {
         @apply bg-ink text-paper;
     }
+
+    /* Premium custom scrollbar (desktop) */
+    @media (pointer: fine) {
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d9d9d4;
+            border-radius: 999px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #bfbfb8;
+            background-clip: content-box;
+        }
+    }
+
 
     /* Focus ring — accessible and on-brand */
     :focus-visible {
@@ -104,10 +131,63 @@
                 rgba(255, 255, 255, 0) 100%);
     }
 
+    /* Premium primary button — subtle sheen + lift */
+    .bk-btn-premium {
+        @apply relative inline-flex items-center justify-center overflow-hidden rounded-full bg-ink px-8 text-sm font-bold uppercase tracking-wide text-paper transition-all duration-300;
+    }
+
+    .bk-btn-premium::after {
+        content: "";
+        @apply absolute inset-0 -translate-x-full opacity-0 transition-all duration-500;
+        background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+    }
+
+    .bk-btn-premium:hover {
+        @apply -translate-y-0.5 shadow-lift;
+    }
+
+    .bk-btn-premium:hover::after {
+        @apply translate-x-full opacity-100;
+    }
+
+    /* Luxe card — hairline border, soft depth */
+    .bk-card-luxe {
+        @apply relative overflow-hidden rounded-3xl border border-grey-200/70 bg-white shadow-card transition-all duration-500;
+    }
+
+    .bk-card-luxe:hover {
+        @apply -translate-y-1.5 border-grey-300/60 shadow-lift;
+    }
+
+    /* Kinetic link underline */
+    .bk-underline {
+        @apply relative;
+    }
+
+    .bk-underline::after {
+        content: "";
+        @apply absolute -bottom-0.5 left-0 h-px w-0 bg-current transition-all duration-300;
+    }
+
+    .bk-underline:hover::after {
+        @apply w-full;
+    }
+
+    /* Section eyebrow line */
+    .bk-eyebrow {
+        @apply inline-flex items-center gap-3 text-xs font-bold uppercase tracking-[0.3em] text-grey-400;
+    }
+
+    .bk-eyebrow::before {
+        content: "";
+        @apply h-px w-8 bg-grey-300;
+    }
+
     /* Prose for editorial product/legal copy */
     .bk-prose {
         @apply text-grey-700 leading-relaxed;
     }
+
 
     .bk-prose p {
         @apply mb-4;
