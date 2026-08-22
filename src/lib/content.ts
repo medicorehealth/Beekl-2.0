@@ -1,6 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/db";
+import { safe } from "@/lib/safe";
 import type { HeroSlide } from "@/components/layout/HeroCarousel";
+
 
 /**
  * Content/CMS helpers. Banners and featured sections are DB-driven so the admin
@@ -56,20 +58,27 @@ export async function getActiveBanners(): Promise<{
     isDefault: boolean;
 }> {
     const now = new Date();
-    const banners = await prisma.banner.findMany({
-        where: {
-            isActive: true,
-            AND: [
-                { OR: [{ startDate: null }, { startDate: { lte: now } }] },
-                { OR: [{ endDate: null }, { endDate: { gte: now } }] },
-            ],
-        },
-        orderBy: { displayOrder: "asc" },
-    });
+    // Wrapped in safe() so a missing/unreachable DB never blanks the hero —
+    // we always fall back to the on-brand default slides.
+    const banners = await safe(
+        () =>
+            prisma.banner.findMany({
+                where: {
+                    isActive: true,
+                    AND: [
+                        { OR: [{ startDate: null }, { startDate: { lte: now } }] },
+                        { OR: [{ endDate: null }, { endDate: { gte: now } }] },
+                    ],
+                },
+                orderBy: { displayOrder: "asc" },
+            }),
+        []
+    );
 
     if (banners.length === 0) {
         return { slides: DEFAULT_SLIDES, isDefault: true };
     }
+
 
     return {
         slides: banners.map((b) => ({
