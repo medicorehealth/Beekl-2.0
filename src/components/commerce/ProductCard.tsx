@@ -11,7 +11,7 @@ export function ProductCard({ product }: { product: BeeklProduct }) {
     return (
         <div className="group relative">
             <Link href={`/products/${product.handle}`} className="block">
-                <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-grey-100">
+                <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-grey-100 ring-1 ring-grey-200/60 transition-all duration-500 group-hover:ring-ink">
                     {product.image ? (
                         <>
                             {/* Base image */}
@@ -21,10 +21,11 @@ export function ProductCard({ product }: { product: BeeklProduct }) {
                                 alt={product.title}
                                 loading="lazy"
                                 className={cn(
-                                    "absolute inset-0 h-full w-full object-cover transition-opacity duration-500",
+                                    "absolute inset-0 h-full w-full object-cover transition-all duration-700 group-hover:scale-105",
                                     product.hoverImage && "group-hover:opacity-0"
                                 )}
                             />
+
                             {/* Hover image */}
                             {product.hoverImage && (
                                 // eslint-disable-next-line @next/next/no-img-element
@@ -68,22 +69,23 @@ export function ProductCard({ product }: { product: BeeklProduct }) {
                 </div>
             </Link>
 
-            <div className="mt-3 space-y-1">
+            <div className="mt-3.5 space-y-1">
                 {product.creator && (
                     <Link
                         href={`/creators/${product.creator.handle}`}
-                        className="text-[11px] font-bold uppercase tracking-wide text-grey-400 hover:text-ink"
+                        className="text-[11px] font-bold uppercase tracking-[0.12em] text-grey-400 hover:text-flame"
                     >
                         @{product.creator.handle}
                     </Link>
                 )}
                 <Link href={`/products/${product.handle}`} className="block">
-                    <h3 className="line-clamp-1 text-sm font-semibold text-ink">
+                    <h3 className="line-clamp-1 text-[13px] font-bold uppercase tracking-tight text-ink">
                         {product.title}
                     </h3>
                 </Link>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-ink">
+                <div className="flex items-center gap-2 pt-0.5">
+                    <span className="text-[15px] font-bold text-ink">
+
                         {product.price != null ? formatINR(product.price) : "—"}
                     </span>
                     {product.compareAtPrice && discount && (

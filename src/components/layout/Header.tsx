@@ -47,12 +47,12 @@ export function Header() {
         <>
             <header
                 className={cn(
-                    "sticky top-0 z-50 border-b bg-paper/95 backdrop-blur transition-shadow",
+                    "sticky top-0 z-50 border-b bg-paper/80 backdrop-blur-xl transition-all duration-300",
                     scrolled ? "border-grey-200 shadow-sm" : "border-transparent"
                 )}
             >
                 <div className="bk-container">
-                    <div className="flex h-16 items-center justify-between gap-4">
+                    <div className="flex h-[72px] items-center justify-between gap-4">
                         {/* Left: mobile menu + logo */}
                         <div className="flex items-center gap-3">
                             <button
@@ -62,25 +62,28 @@ export function Header() {
                             >
                                 <Menu className="h-6 w-6" />
                             </button>
-                            <Link href="/" className="select-none">
-                                <span className="font-display text-2xl font-extrabold tracking-tight text-ink">
+                            <Link href="/" className="group select-none">
+                                <span className="font-display text-[28px] font-bold leading-none tracking-[-0.04em] text-ink">
                                     BEE<span className="text-flame">KL</span>
+                                    <span className="ml-0.5 inline-block h-1.5 w-1.5 rounded-full bg-flame align-top transition-transform duration-300 group-hover:scale-150" />
                                 </span>
                             </Link>
                         </div>
 
                         {/* Center: primary nav (desktop) */}
-                        <nav className="hidden items-center gap-5 lg:flex">
+                        <nav className="hidden items-center gap-1 lg:flex">
                             {MAIN_NAV.map((item) => (
                                 <Link
                                     key={item.label}
                                     href={item.href}
-                                    className="text-[13px] font-bold uppercase tracking-wide text-ink/80 transition-colors hover:text-ink"
+                                    className="group relative px-3 py-2 text-[12px] font-bold uppercase tracking-[0.08em] text-ink/70 transition-colors hover:text-ink"
                                 >
                                     {item.label}
+                                    <span className="absolute inset-x-3 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-flame transition-transform duration-300 group-hover:scale-x-100" />
                                 </Link>
                             ))}
                         </nav>
+
 
                         {/* Right: actions */}
                         <div className="flex items-center gap-1 sm:gap-2">

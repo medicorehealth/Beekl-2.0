@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers/Providers";
 import { SITE } from "@/lib/constants";
@@ -9,6 +9,15 @@ const inter = Inter({
     variable: "--font-inter",
     display: "swap",
 });
+
+// Bold grotesk display face — drives every heading for a premium streetwear feel.
+const display = Space_Grotesk({
+    subsets: ["latin"],
+    weight: ["500", "600", "700"],
+    variable: "--font-clash",
+    display: "swap",
+});
+
 
 // BeeKL is a fully database- and session-driven app. Render everything
 // dynamically at request time so Vercel never statically exports pages at
@@ -55,7 +64,8 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" className={inter.variable}>
+        <html lang="en" className={`${inter.variable} ${display.variable}`}>
+
             <body>
                 <Providers>{children}</Providers>
             </body>

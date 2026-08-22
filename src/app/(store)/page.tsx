@@ -63,7 +63,34 @@ export default async function HomePage() {
             {/* 3. Hero slider (auto-sliding; interval is admin-configurable) */}
             <HeroCarousel slides={slides} autoplayMs={settings.heroAutoplayMs} />
 
+            {/* Brand marquee — signature streetwear strip */}
+            <div className="border-y border-ink bg-ink py-3 text-paper">
+                <div className="flex overflow-hidden">
+                    <div className="bk-marquee gap-6">
+                        {Array.from({ length: 2 }).flatMap((_, r) =>
+                            [
+                                "THE COMMUNITY MAKES THE CLOTHES",
+                                "MEME CULTURE",
+                                "CREATOR DROPS",
+                                "LIMITED RUNS",
+                                "MADE IN INDIA",
+                                "WEAR THE INTERNET",
+                            ].map((t, i) => (
+                                <span
+                                    key={`${r}-${i}`}
+                                    className="flex items-center gap-6 font-display text-lg font-bold uppercase tracking-tight"
+                                >
+                                    {t}
+                                    <span className="text-honey">✦</span>
+                                </span>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+
             {/* 4. Shop by category */}
+
             {on("categories") && (
                 <section className="bk-section">
                     <div className="bk-container">
