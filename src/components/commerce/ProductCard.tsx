@@ -11,8 +11,9 @@ export function ProductCard({ product }: { product: BeeklProduct }) {
     return (
         <div className="group relative">
             <Link href={`/products/${product.handle}`} className="block">
-                <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-grey-100 ring-1 ring-grey-200/60 transition-all duration-500 group-hover:ring-ink">
+                <div className="bk-glass relative aspect-[3/4] overflow-hidden rounded-3xl transition-all duration-500 group-hover:-translate-y-1.5 group-hover:shadow-lift">
                     {product.image ? (
+
                         <>
                             {/* Base image */}
                             {/* eslint-disable-next-line @next/next/no-img-element */}

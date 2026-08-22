@@ -106,7 +106,8 @@ export default async function HomePage() {
 
             {/* 5. Trending products */}
             {on("trending") && (
-                <section className="bk-section bg-paper-soft">
+                <section className="bk-section">
+
                     <div className="bk-container">
                         <SectionHeader kicker={trend.subtitle} title={trend.title} href="/shop" />
                         {trending.length ? (
@@ -150,8 +151,9 @@ export default async function HomePage() {
 
             {/* 7. Meme collection */}
             {on("memes") && (
-                <section className="bk-section bg-ink text-paper">
-                    <div className="bk-container">
+                <section className="bk-section">
+                    <div className="bk-container bk-glass-dark rounded-[2rem] p-8 text-paper md:p-12">
+
                         <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
                             <div>
                                 <span className="bk-kicker mb-2 text-honey">{memeCopy.subtitle}</span>
@@ -207,7 +209,8 @@ export default async function HomePage() {
 
             {/* 9 + 10. Creator communities & merchandise */}
             {on("communities") && (
-                <section className="bk-section bg-paper-soft">
+                <section className="bk-section">
+
                     <div className="bk-container">
                         <SectionHeader kicker={commCopy.subtitle} title={commCopy.title} href="/communities" />
                         {communities.length ? (
@@ -303,7 +306,8 @@ export default async function HomePage() {
 
             {/* Featured collections */}
             {collections.length > 0 && (
-                <section className="bk-section bg-paper-soft">
+                <section className="bk-section">
+
                     <div className="bk-container">
                         <SectionHeader kicker="Curated" title="Collections" href="/collections" />
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -347,8 +351,9 @@ export default async function HomePage() {
 
             {/* 13. Social section */}
             {on("social") && (
-                <section className="bk-section bg-ink text-paper">
-                    <div className="bk-container text-center">
+                <section className="bk-section">
+                    <div className="bk-container bk-glass-dark rounded-[2rem] px-6 py-14 text-center text-paper">
+
                         <span className="bk-kicker mb-3 justify-center text-honey">{social.subtitle}</span>
                         <h2 className="font-display text-display-sm text-paper">{social.title}</h2>
                         <p className="mx-auto mt-3 max-w-md text-paper/60">
@@ -425,9 +430,10 @@ function CtaCard({
         <div
             className={
                 "flex flex-col justify-between rounded-3xl p-8 " +
-                (dark ? "bg-ink text-paper" : "border border-grey-200 bg-white text-ink")
+                (dark ? "bk-glass-dark text-paper" : "bk-clay text-ink")
             }
         >
+
             <div>
                 <div className={dark ? "text-honey" : "text-flame"}>{icon}</div>
                 <h3 className="mt-4 font-display text-2xl font-bold">{title}</h3>

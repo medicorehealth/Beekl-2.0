@@ -108,8 +108,9 @@ export function CreatorCard({
     return (
         <Link
             href={`/creators/${handle}`}
-            className="group block overflow-hidden rounded-2xl border border-grey-200 bg-white transition-all hover:-translate-y-1 hover:shadow-card-hover"
+            className="bk-glass group block overflow-hidden rounded-3xl transition-all duration-500 hover:-translate-y-1.5 hover:shadow-lift"
         >
+
             <div className="relative h-28 bg-gradient-to-br from-charcoal to-ink">
                 {bannerImage && (
                     // eslint-disable-next-line @next/next/no-img-element

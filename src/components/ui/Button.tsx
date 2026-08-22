@@ -6,16 +6,20 @@ type Variant = "primary" | "secondary" | "outline" | "ghost" | "accent" | "dange
 type Size = "sm" | "md" | "lg" | "icon";
 
 const variants: Record<Variant, string> = {
+    // Clay-styled ink button: puffy, tactile, presses in on click.
     primary:
-        "bg-ink text-paper hover:bg-charcoal active:bg-black disabled:bg-grey-300",
+        "bk-clay-press text-paper hover:brightness-110 disabled:opacity-50 [background:linear-gradient(145deg,#1a1a1a,#000)] shadow-[8px_8px_20px_rgba(17,20,45,0.25),-6px_-6px_16px_rgba(255,255,255,0.5),inset_2px_2px_5px_rgba(255,255,255,0.12)]",
+    // Frosted glass button.
     secondary:
-        "bg-paper-soft text-ink border border-grey-200 hover:bg-paper-muted",
+        "bk-glass bk-clay-press text-ink hover:brightness-105",
     outline:
         "bg-transparent text-ink border-2 border-ink hover:bg-ink hover:text-paper",
-    ghost: "bg-transparent text-ink hover:bg-grey-100",
+    ghost: "bg-transparent text-ink hover:bg-white/50",
+    // Clay-styled honey accent.
     accent:
-        "bg-honey text-ink hover:bg-honey-dark font-bold",
-    danger: "bg-flame text-white hover:bg-flame-dark",
+        "bk-clay-accent bk-clay-press text-ink font-bold hover:brightness-105",
+    danger:
+        "bk-clay-press text-white [background:linear-gradient(145deg,#ff5c3d,#e23a1e)] shadow-[8px_8px_20px_rgba(226,58,30,0.3),-6px_-6px_16px_rgba(255,255,255,0.5)]",
 };
 
 const sizes: Record<Size, string> = {
@@ -26,7 +30,8 @@ const sizes: Record<Size, string> = {
 };
 
 const base =
-    "inline-flex items-center justify-center gap-2 rounded-full font-semibold uppercase tracking-wide transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2";
+    "inline-flex items-center justify-center gap-2 rounded-2xl font-semibold uppercase tracking-wide transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2";
+
 
 export interface ButtonProps
     extends React.ButtonHTMLAttributes<HTMLButtonElement> {

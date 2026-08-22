@@ -47,10 +47,11 @@ export function Header() {
         <>
             <header
                 className={cn(
-                    "sticky top-0 z-50 border-b bg-paper/80 backdrop-blur-xl transition-all duration-300",
-                    scrolled ? "border-grey-200 shadow-sm" : "border-transparent"
+                    "sticky top-0 z-50 transition-all duration-300",
+                    scrolled ? "bk-glass shadow-lg" : "bg-transparent"
                 )}
             >
+
                 <div className="bk-container">
                     <div className="flex h-[72px] items-center justify-between gap-4">
                         {/* Left: mobile menu + logo */}
